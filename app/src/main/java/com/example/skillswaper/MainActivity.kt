@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.*
+import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.ui.navigation.MainNavigation
 import com.example.skillswaper.ui.screens.auth.LoginScreen
 import com.example.skillswaper.ui.screens.auth.SignupScreen
@@ -20,7 +21,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SkillSwaperTheme {
-                var currentScreen by remember { mutableStateOf("login") }
+            var currentScreen by remember { 
+                mutableStateOf(if (FirebaseService.isUserLoggedIn()) "main" else "login") 
+            }
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (currentScreen) {

@@ -78,7 +78,7 @@ object FirebaseService {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error fetching skills feed", error)
-                    close(error)
+                    trySend(emptyList()) // Send empty instead of closing with error
                     return@addSnapshotListener
                 }
                 
@@ -107,7 +107,7 @@ object FirebaseService {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error fetching user posts", error)
-                    close(error)
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 val skills = snapshot?.documents?.mapNotNull { doc ->
@@ -133,7 +133,7 @@ object FirebaseService {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error fetching liked posts", error)
-                    close(error)
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 val skills = snapshot?.documents?.mapNotNull { doc ->
@@ -197,7 +197,8 @@ object FirebaseService {
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e(TAG, "Error fetching comments", error)
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 val comments = snapshot?.documents?.mapNotNull { doc ->
@@ -236,7 +237,8 @@ object FirebaseService {
             .whereEqualTo("toUserId", userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e(TAG, "Error fetching inquiries", error)
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
                 val inquiries = snapshot?.documents?.mapNotNull { doc ->
