@@ -205,19 +205,19 @@ object FirebaseService {
         
         db.runTransaction { transaction ->
             val currentSnap = transaction.get(currentUserRef)
-            val following = currentSnap.get("following") as? List<String> ?: emptyList()
+            val following = currentSnap.get("followingList") as? List<String> ?: emptyList()
             
             if (following.contains(targetUserId)) {
                 // Unfollow
-                transaction.update(currentUserRef, "following", FieldValue.arrayRemove(targetUserId))
+                transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
                 transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
-                transaction.update(targetUserRef, "followers", FieldValue.arrayRemove(currentUserId))
+                transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
                 transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
             } else {
                 // Follow
-                transaction.update(currentUserRef, "following", FieldValue.arrayUnion(targetUserId))
+                transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
                 transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
-                transaction.update(targetUserRef, "followers", FieldValue.arrayUnion(currentUserId))
+                transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
                 transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
             }
         }.await()
