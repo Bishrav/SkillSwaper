@@ -12,7 +12,8 @@ data class SkillPost(
     val imageUrl: String? = null,
     val timestamp: Long = System.currentTimeMillis(),
     val commentsCount: Int = 0,
-    val isFollowing: Boolean = false
+    val likesCount: Int = 0,
+    val likedBy: List<String> = emptyList()
 )
 
 val sampleFeed = listOf(
@@ -23,7 +24,8 @@ val sampleFeed = listOf(
         price = "$50",
         duration = "2 hours",
         caption = "Mastering Figma and design systems. Ready to swap for some backend knowledge!",
-        commentsCount = 12
+        commentsCount = 12,
+        likesCount = 45
     ),
     SkillPost(
         id = "2",
@@ -33,6 +35,6 @@ val sampleFeed = listOf(
         duration = "1 hour",
         caption = "Golden hour portraits and editing. Looking to learn some guitar.",
         commentsCount = 5,
-        isFollowing = true
+        likesCount = 18
     )
 )
