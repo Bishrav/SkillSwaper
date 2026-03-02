@@ -66,7 +66,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
 @Composable
 fun SkillPostItem(post: SkillPost, onInquiryClick: () -> Unit) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
-    val isLiked = post.likedBy.contains(currentUserId)
+    val isLiked = post.likedBy?.contains(currentUserId) == true
     val scope = rememberCoroutineScope()
     var showComments by remember { mutableStateOf(false) }
 

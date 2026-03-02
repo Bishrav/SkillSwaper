@@ -11,6 +11,6 @@ data class User(
     val bio: String = "",
     val avatarUrl: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val followerList: List<String> = emptyList(),
-    val followingList: List<String> = emptyList()
+    val followerList: List<String>? = emptyList(),
+    val followingList: List<String>? = emptyList()
 )

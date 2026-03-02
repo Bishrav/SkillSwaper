@@ -13,7 +13,7 @@ data class SkillPost(
     val timestamp: Long = System.currentTimeMillis(),
     val commentsCount: Int = 0,
     val likesCount: Int = 0,
-    val likedBy: List<String> = emptyList()
+    val likedBy: List<String>? = emptyList()
 )
 
 val sampleFeed = listOf(
