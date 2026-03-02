@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="gcm_defaultSenderId" translatable="false">322808058780</string>
-    <string name="google_api_key" translatable="false">AIzaSyAvm6mnfCsP_K8P4buFW4rwCvrD_YMpNHw</string>
-    <string name="google_app_id" translatable="false">1:322808058780:android:6627117670e51ce1342e59</string>
-    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAvm6mnfCsP_K8P4buFW4rwCvrD_YMpNHw</string>
-    <string name="google_storage_bucket" translatable="false">skillswapper-791a3.firebasestorage.app</string>
-    <string name="project_id" translatable="false">skillswapper-791a3</string>
-</resources>
