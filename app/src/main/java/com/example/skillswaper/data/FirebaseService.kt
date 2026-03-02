@@ -1,6 +1,7 @@
 package com.example.skillswaper.data
 
 import com.example.skillswaper.model.SkillPost
+import com.example.skillswaper.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -16,6 +17,16 @@ object FirebaseService {
     // Auth
     fun getCurrentUserId(): String? = auth.currentUser?.uid
     fun isUserLoggedIn(): Boolean = auth.currentUser != null
+
+    // User Data
+    suspend fun saveUserProfile(user: User) {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).set(user).await()
+    }
+
+    suspend fun resetPassword(email: String) {
+        auth.sendPasswordResetEmail(email).await()
+    }
 
     // Firestore Skill CRUD
     suspend fun postSkill(skill: SkillPost) {

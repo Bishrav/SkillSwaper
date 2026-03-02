@@ -13,6 +13,7 @@ import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.model.SkillPost
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostScreen(onPostCreated: () -> Unit) {
     val scope = rememberCoroutineScope()

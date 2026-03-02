@@ -1,12 +1,13 @@
 package com.example.skillswaper.ui.screens.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +19,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.skillswaper.data.FirebaseService
+import com.example.skillswaper.model.SkillPost
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
@@ -114,7 +117,7 @@ fun SkillPostItem(post: SkillPost) {
                 Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Like")
             }
             IconButton(onClick = { /* Comment */ }) {
-                Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = "Comment")
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Comment") // Temporary replacement for ChatBubble
             }
             Text(text = "${post.commentsCount} comments", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
         }

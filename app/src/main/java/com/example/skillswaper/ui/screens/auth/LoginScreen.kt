@@ -17,6 +17,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -55,18 +56,30 @@ fun LoginScreen(
             Text("Forgot Password?")
         }
         
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+        }
+        
         Spacer(modifier = Modifier.height(32.dp))
         
         Button(
             onClick = { 
                 if (email.isNotEmpty() && password.isNotEmpty()) {
                     isLoading = true
+                    errorMessage = null
                     com.google.firebase.auth.FirebaseAuth.getInstance()
                         .signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
                             isLoading = false
-                            if (task.isSuccessful) onLoginSuccess()
+                            if (task.isSuccessful) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = task.exception?.localizedMessage ?: "Login failed"
+                            }
                         }
+                } else {
+                    errorMessage = "Email and password are required"
                 }
             },
             modifier = Modifier.fillMaxWidth(),

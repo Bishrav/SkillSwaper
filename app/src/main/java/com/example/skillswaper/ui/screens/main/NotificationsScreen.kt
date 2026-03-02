@@ -1,5 +1,6 @@
 package com.example.skillswaper.ui.screens.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +28,7 @@ val sampleNotifications = listOf(
     NotificationItem("3", "David Goggins", "Guitar Lessons")
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen() {
     Scaffold(
@@ -56,7 +58,3 @@ fun NotificationsScreen() {
         }
     }
 }
-
-private fun Modifier.background(color: androidx.compose.ui.graphics.Color) = this.then(
-    androidx.compose.ui.draw.drawBehind { drawRect(color) }
-)

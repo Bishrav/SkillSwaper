@@ -1,11 +1,21 @@
 package com.example.skillswaper.ui.screens.main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onSignOut: () -> Unit) {
     Scaffold(
@@ -17,7 +27,7 @@ fun ProfileScreen(onSignOut: () -> Unit) {
                         FirebaseAuth.getInstance().signOut()
                         onSignOut()
                     }) {
-                        Icon(Icons.Default.Logout, contentDescription = "Sign Out")
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Sign Out")
                     }
                     IconButton(onClick = { /* Settings */ }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -61,7 +71,13 @@ fun ProfileScreen(onSignOut: () -> Unit) {
             
             // Personal Skills Section
             Text("Your Posted Skills", modifier = Modifier.align(Alignment.Start), style = MaterialTheme.typography.titleMedium)
-            // TODO: Add Grid/List of personal skill posts
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Placeholder for skills list
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No skills posted yet.", color = MaterialTheme.colorScheme.secondary)
+            }
         }
     }
 }
@@ -73,7 +89,3 @@ fun StatItem(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
     }
 }
-
-private fun Modifier.background(color: androidx.compose.ui.graphics.Color) = this.then(
-    androidx.compose.ui.draw.drawBehind { drawRect(color) }
-)

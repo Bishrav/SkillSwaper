@@ -2,7 +2,7 @@ package com.example.skillswaper.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddBox
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -23,7 +23,7 @@ import com.example.skillswaper.ui.screens.main.ProfileScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Post : Screen("post", "Post", Icons.Default.AddBox)
+    object Post : Screen("post", "Post", Icons.Default.Add)
     object Notifications : Screen("notifications", "Alerts", Icons.Default.Notifications)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }

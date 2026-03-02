@@ -7,6 +7,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.skillswaper.data.FirebaseService
+import com.example.skillswaper.model.User
+import kotlinx.coroutines.launch
 
 @Composable
 fun SignupScreen(
@@ -17,6 +20,9 @@ fun SignupScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -55,18 +61,53 @@ fun SignupScreen(
             modifier = Modifier.fillMaxWidth()
         )
         
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+        }
+        
+        if (successMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(successMessage!!, color = MaterialTheme.colorScheme.primary)
+        }
+        
         Spacer(modifier = Modifier.height(32.dp))
         
         Button(
             onClick = { 
-                if (email.isNotEmpty() && password.isNotEmpty()) {
+                if (email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty()) {
                     isLoading = true
-                    com.google.firebase.auth.FirebaseAuth.getInstance()
-                        .createUserWithEmailAndPassword(email, password)
+                    errorMessage = null
+                    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    auth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
-                            isLoading = false
-                            if (task.isSuccessful) onSignupSuccess()
+                            if (task.isSuccessful) {
+                                val uid = task.result?.user?.uid ?: ""
+                                scope.launch {
+                                    try {
+                                        FirebaseService.saveUserProfile(
+                                            User(
+                                                uid = uid,
+                                                username = username,
+                                                email = email
+                                            )
+                                        )
+                                        successMessage = "User created successfully!"
+                                        isLoading = false
+                                        kotlinx.coroutines.delay(1000)
+                                        onSignupSuccess()
+                                    } catch (e: Exception) {
+                                        isLoading = false
+                                        errorMessage = "Profile creation failed: ${e.localizedMessage}"
+                                    }
+                                }
+                            } else {
+                                isLoading = false
+                                errorMessage = task.exception?.localizedMessage ?: "Signup failed"
+                            }
                         }
+                } else {
+                    errorMessage = "All fields are required"
                 }
             },
             modifier = Modifier.fillMaxWidth(),
