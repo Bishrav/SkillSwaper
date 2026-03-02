@@ -23,7 +23,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(userId: String? = null, onSignOut: (() -> Unit)? = null) {
+fun ProfileScreen(
+    userId: String? = null, 
+    onSignOut: (() -> Unit)? = null,
+    onInquiryNavigate: (String, String, String) -> Unit
+) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val targetUserId = userId ?: currentUserId
     val isOwnProfile = targetUserId == currentUserId
@@ -120,7 +124,10 @@ fun ProfileScreen(userId: String? = null, onSignOut: (() -> Unit)? = null) {
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(posts) { post ->
-                        SkillPostItem(post = post, onInquiryClick = { /* Profile shouldn't trigger inquiry form directly maybe? Or maybe it should? */ })
+                        SkillPostItem(
+                            post = post, 
+                            onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
+                        )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     }
                 }

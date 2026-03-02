@@ -90,7 +90,14 @@ fun MainNavigation(onSignOut: () -> Unit) {
                     navController.navigate(Screen.UserProfile.createRoute(userId))
                 }) 
             }
-            composable(Screen.Profile.route) { ProfileScreen(onSignOut = onSignOut) }
+            composable(Screen.Profile.route) { 
+                ProfileScreen(
+                    onSignOut = onSignOut,
+                    onInquiryNavigate = { id, name, owner -> 
+                        navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
+                    }
+                ) 
+            }
             
             // Sub-routes
             composable(
@@ -118,7 +125,12 @@ fun MainNavigation(onSignOut: () -> Unit) {
                 arguments = listOf(navArgument("userId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
-                ProfileScreen(userId = userId)
+                ProfileScreen(
+                    userId = userId,
+                    onInquiryNavigate = { id, name, owner -> 
+                        navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
+                    }
+                )
             }
         }
     }

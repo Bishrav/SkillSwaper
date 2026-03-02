@@ -28,22 +28,56 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("SkillSwaper", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = { /* Search */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+            if (isSearchVisible) {
+                TopAppBar(
+                    title = {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text("Search skills or users...") },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            singleLine = true,
+                            trailingIcon = {
+                                IconButton(onClick = { 
+                                    isSearchVisible = false
+                                    searchQuery = "" 
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Close Search")
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.statusBarsPadding()
+                )
+            } else {
+                CenterAlignedTopAppBar(
+                    title = { Text("SkillSwaper", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                    actions = {
+                        IconButton(onClick = { isSearchVisible = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search")
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
-        if (skills.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No skills posted yet. Be the first!", color = MaterialTheme.colorScheme.secondary)
+        val filteredSkills = skills.filter { 
+            it.skillName.contains(searchQuery, ignoreCase = true) || 
+            it.userName.contains(searchQuery, ignoreCase = true) ||
+            it.caption.contains(searchQuery, ignoreCase = true)
+        }
+
+        if (filteredSkills.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Text(
+                    if (searchQuery.isEmpty()) "No skills posted yet." else "No results found for '$searchQuery'", 
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
         } else {
             LazyColumn(
@@ -51,7 +85,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                items(skills) { post ->
+                items(filteredSkills) { post ->
                     SkillPostItem(
                         post = post,
                         onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
@@ -132,7 +166,7 @@ fun SkillPostItem(post: SkillPost, onInquiryClick: () -> Unit) {
                 Icon(
                     if (isLiked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = "Like",
-                    tint = if (isLiked) Color.Red else LocalContentColor.current
+                    tint = if (isLiked) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(text = "${post.likesCount}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(end = 8.dp))
