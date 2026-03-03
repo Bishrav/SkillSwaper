@@ -387,8 +387,13 @@ object FirebaseService {
             }.await()
             Log.d(TAG, "Purchase completed for skill $skillId. Creator $creatorId earned $price")
         } catch (e: Exception) {
-            Log.e(TAG, "Purchase failed", e)
-            throw e
+            val friendlyError = if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
+                "Firebase Permission Denied: Please update your Firestore Security Rules to allow 'earnings' updates and 'purchases' creation!"
+            } else {
+                e.message ?: "Unknown error"
+            }
+            Log.e(TAG, "Purchase failed: $friendlyError", e)
+            throw Exception(friendlyError)
         }
     }
 }
