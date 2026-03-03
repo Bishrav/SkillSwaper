@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,11 +83,14 @@ fun ProfileScreen(
                     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
                     val isFollowing = currentUserStats?.followingList?.contains(targetUserId) == true
                     
-                    // Optimistic UI state - more stable initialization
-                    var isFollowingLocal by remember { mutableStateOf(isFollowing) }
+                    // Optimistic UI state - persistent and protected
+                    var isFollowingLocal by rememberSaveable(targetUserId) { mutableStateOf(isFollowing) }
+                    var lastInteractionTime by remember { mutableLongStateOf(0L) }
                     
                     LaunchedEffect(isFollowing, currentUserStats != null) {
-                        if (currentUserStats != null) {
+                        val currentTime = System.currentTimeMillis()
+                        // Ignore backend updates for 3 seconds after a click to prevent premature reverts
+                        if (currentUserStats != null && (currentTime - lastInteractionTime > 3000)) {
                             isFollowingLocal = isFollowing
                             android.util.Log.d("ProfileScreen", "Is following state updated from backend: $isFollowing for user: $targetUserId")
                         }
@@ -96,6 +100,7 @@ fun ProfileScreen(
                     Button(
                         onClick = { 
                             isFollowingLocal = !isFollowingLocal // Instant UI update
+                            lastInteractionTime = System.currentTimeMillis()
                             scope.launch { 
                                 try {
                                     FirebaseService.toggleFollow(targetUserId) 

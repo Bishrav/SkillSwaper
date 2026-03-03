@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -119,12 +120,15 @@ fun SkillPostItem(
     val scope = rememberCoroutineScope()
     var showComments by remember { mutableStateOf(false) }
     
-    // Optimistic UI state - more stable initialization
-    var isFollowingLocal by remember { mutableStateOf(isFollowing) }
+    // Optimistic UI state - persistent and protected
+    var isFollowingLocal by rememberSaveable(post.id) { mutableStateOf(isFollowing) }
+    var lastInteractionTime by remember { mutableLongStateOf(0L) }
     
-    // Sync with backend ONLY when data is explicitly loaded and reliable
+    // Sync with backend ONLY when data is reliable and not recently interacted with
     LaunchedEffect(isFollowing, isStatsLoaded) {
-        if (isStatsLoaded) {
+        val currentTime = System.currentTimeMillis()
+        // Ignore backend updates for 3 seconds after a click to prevent premature reverts
+        if (isStatsLoaded && (currentTime - lastInteractionTime > 3000)) {
             isFollowingLocal = isFollowing
         }
     }
@@ -147,6 +151,7 @@ fun SkillPostItem(
                 Button(
                     onClick = { 
                         isFollowingLocal = !isFollowingLocal // Instant UI update
+                        lastInteractionTime = System.currentTimeMillis()
                         scope.launch { 
                             try {
                                 FirebaseService.toggleFollow(post.userId) 

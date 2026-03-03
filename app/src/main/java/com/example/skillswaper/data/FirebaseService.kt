@@ -281,6 +281,7 @@ object FirebaseService {
         try {
             Log.d(TAG, "Attempting to toggle follow for $targetUserId by $currentUserId")
             db.runTransaction { transaction ->
+                // READ SECTION - All gets must happen first
                 val currentSnap = transaction.get(currentUserRef)
                 val targetSnap = transaction.get(targetUserRef)
                 
@@ -289,33 +290,42 @@ object FirebaseService {
                     return@runTransaction
                 }
 
-                // If current user profile doesn't exist, initialize it
+                val followingRaw = currentSnap.get("followingList")
+                val following = if (followingRaw is List<*>) {
+                    followingRaw.filterIsInstance<String>()
+                } else {
+                    emptyList<String>()
+                }
+                
+                // WRITE SECTION - Updates and sets
                 if (!currentSnap.exists()) {
                     Log.d(TAG, "Current user $currentUserId profile does not exist. Initializing basic profile.")
                     val userEmail = auth.currentUser?.email ?: "Unknown"
                     val newUser = User(
                         uid = currentUserId,
                         username = userEmail.substringBefore("@"),
-                        email = userEmail
+                        email = userEmail,
+                        followingList = listOf(targetUserId),
+                        followingCount = 1
                     )
                     transaction.set(currentUserRef, newUser)
-                }
-
-                val currentStats = transaction.get(currentUserRef).toObject(User::class.java)
-                val following = currentStats?.followingList ?: emptyList()
-                
-                if (following.contains(targetUserId)) {
-                    Log.d(TAG, "Unfollowing user $targetUserId")
-                    transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
-                    transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
-                    transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
-                    transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
-                } else {
-                    Log.d(TAG, "Following user $targetUserId")
-                    transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
-                    transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
+                    
                     transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
                     transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
+                } else {
+                    if (following.contains(targetUserId)) {
+                        Log.d(TAG, "Unfollowing user $targetUserId")
+                        transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
+                        transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
+                        transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
+                        transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
+                    } else {
+                        Log.d(TAG, "Following user $targetUserId")
+                        transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
+                        transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
+                        transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
+                        transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
+                    }
                 }
             }.await()
             Log.d(TAG, "Toggle follow transaction completed successfully")
