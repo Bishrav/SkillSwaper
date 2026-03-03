@@ -97,6 +97,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
                     SkillPostItem(
                         post = post,
                         isFollowing = followingList.contains(post.userId),
+                        isStatsLoaded = currentUserStats != null,
                         onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
                     )
                     HorizontalDivider(color = Color.DarkGray.copy(alpha = 0.5f))
@@ -107,7 +108,12 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
 }
 
 @Composable
-fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> Unit) {
+fun SkillPostItem(
+    post: SkillPost, 
+    isFollowing: Boolean, 
+    isStatsLoaded: Boolean,
+    onInquiryClick: () -> Unit
+) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val isLiked = post.likedBy?.contains(currentUserId) == true
     val scope = rememberCoroutineScope()
@@ -116,9 +122,11 @@ fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> U
     // Optimistic UI state - more stable initialization
     var isFollowingLocal by remember { mutableStateOf(isFollowing) }
     
-    // Sync with backend only when isFollowing actually changes and is reliable
-    LaunchedEffect(isFollowing) {
-        isFollowingLocal = isFollowing
+    // Sync with backend ONLY when data is explicitly loaded and reliable
+    LaunchedEffect(isFollowing, isStatsLoaded) {
+        if (isStatsLoaded) {
+            isFollowingLocal = isFollowing
+        }
     }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {

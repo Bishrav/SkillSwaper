@@ -85,9 +85,11 @@ fun ProfileScreen(
                     // Optimistic UI state - more stable initialization
                     var isFollowingLocal by remember { mutableStateOf(isFollowing) }
                     
-                    LaunchedEffect(isFollowing) {
-                        isFollowingLocal = isFollowing
-                        android.util.Log.d("ProfileScreen", "Is following state updated from backend: $isFollowing for user: $targetUserId")
+                    LaunchedEffect(isFollowing, currentUserStats != null) {
+                        if (currentUserStats != null) {
+                            isFollowingLocal = isFollowing
+                            android.util.Log.d("ProfileScreen", "Is following state updated from backend: $isFollowing for user: $targetUserId")
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -154,6 +156,7 @@ fun ProfileScreen(
                         SkillPostItem(
                             post = post, 
                             isFollowing = currentFollowingList.contains(post.userId),
+                            isStatsLoaded = currentUserStats != null,
                             onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
