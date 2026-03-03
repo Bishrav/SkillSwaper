@@ -289,19 +289,20 @@ object FirebaseService {
                     return@runTransaction
                 }
 
+                // If current user profile doesn't exist, initialize it
                 if (!currentSnap.exists()) {
-                    Log.e(TAG, "Current user $currentUserId profile does not exist. Initializing profile.")
-                    // If profile doesn't exist, we can't follow, but we can try to initialize it first
-                    // However, it's safer to just return and let user know.
-                    return@runTransaction
+                    Log.d(TAG, "Current user $currentUserId profile does not exist. Initializing basic profile.")
+                    val userEmail = auth.currentUser?.email ?: "Unknown"
+                    val newUser = User(
+                        uid = currentUserId,
+                        username = userEmail.substringBefore("@"),
+                        email = userEmail
+                    )
+                    transaction.set(currentUserRef, newUser)
                 }
 
-                val followingRaw = currentSnap.get("followingList")
-                val following = if (followingRaw is List<*>) {
-                    followingRaw.filterIsInstance<String>()
-                } else {
-                    emptyList<String>()
-                }
+                val currentStats = transaction.get(currentUserRef).toObject(User::class.java)
+                val following = currentStats?.followingList ?: emptyList()
                 
                 if (following.contains(targetUserId)) {
                     Log.d(TAG, "Unfollowing user $targetUserId")

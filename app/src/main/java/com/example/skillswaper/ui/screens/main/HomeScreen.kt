@@ -113,8 +113,13 @@ fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> U
     val scope = rememberCoroutineScope()
     var showComments by remember { mutableStateOf(false) }
     
-    // Optimistic UI state
-    var isFollowingLocal by remember(isFollowing) { mutableStateOf(isFollowing) }
+    // Optimistic UI state - more stable initialization
+    var isFollowingLocal by remember { mutableStateOf(isFollowing) }
+    
+    // Sync with backend only when isFollowing actually changes and is reliable
+    LaunchedEffect(isFollowing) {
+        isFollowingLocal = isFollowing
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -82,11 +82,12 @@ fun ProfileScreen(
                     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
                     val isFollowing = currentUserStats?.followingList?.contains(targetUserId) == true
                     
-                    // Optimistic UI state
-                    var isFollowingLocal by remember(isFollowing) { mutableStateOf(isFollowing) }
-
+                    // Optimistic UI state - more stable initialization
+                    var isFollowingLocal by remember { mutableStateOf(isFollowing) }
+                    
                     LaunchedEffect(isFollowing) {
-                        android.util.Log.d("ProfileScreen", "Is following state: $isFollowing for user: $targetUserId")
+                        isFollowingLocal = isFollowing
+                        android.util.Log.d("ProfileScreen", "Is following state updated from backend: $isFollowing for user: $targetUserId")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
