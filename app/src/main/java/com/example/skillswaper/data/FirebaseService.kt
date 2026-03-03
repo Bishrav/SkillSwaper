@@ -285,11 +285,7 @@ object FirebaseService {
                 val currentSnap = transaction.get(currentUserRef)
                 val targetSnap = transaction.get(targetUserRef)
                 
-                if (!targetSnap.exists()) {
-                    Log.e(TAG, "Target user $targetUserId does not exist")
-                    return@runTransaction
-                }
-
+                // Manual parsing of following list
                 val followingRaw = currentSnap.get("followingList")
                 val following = if (followingRaw is List<*>) {
                     followingRaw.filterIsInstance<String>()
@@ -298,6 +294,19 @@ object FirebaseService {
                 }
                 
                 // WRITE SECTION - Updates and sets
+                
+                // 1. Ensure Target Profile exists
+                if (!targetSnap.exists()) {
+                    Log.d(TAG, "Target user $targetUserId profile does not exist. Initializing basic profile.")
+                    val dummyUser = User(
+                        uid = targetUserId,
+                        username = "User",
+                        email = "..."
+                    )
+                    transaction.set(targetUserRef, dummyUser)
+                }
+
+                // 2. Handle Follow/Unfollow logic
                 if (!currentSnap.exists()) {
                     Log.d(TAG, "Current user $currentUserId profile does not exist. Initializing basic profile.")
                     val userEmail = auth.currentUser?.email ?: "Unknown"
@@ -331,7 +340,7 @@ object FirebaseService {
             Log.d(TAG, "Toggle follow transaction completed successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error toggling follow: ${e.message}", e)
-            throw e
+            throw e // Rethrow to let UI handle feedback
         }
     }
 }

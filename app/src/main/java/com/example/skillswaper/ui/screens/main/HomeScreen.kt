@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import android.util.Log
 import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.model.Comment
@@ -115,6 +117,7 @@ fun SkillPostItem(
     isStatsLoaded: Boolean,
     onInquiryClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val isLiked = post.likedBy?.contains(currentUserId) == true
     val scope = rememberCoroutineScope()
@@ -157,6 +160,7 @@ fun SkillPostItem(
                                 FirebaseService.toggleFollow(post.userId) 
                             } catch (e: Exception) {
                                 Log.e("HomeScreen", "Failed to toggle follow", e)
+                                Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                                 isFollowingLocal = isFollowing // Revert on failure
                             }
                         }

@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.model.User
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +34,7 @@ fun ProfileScreen(
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val targetUserId = userId ?: currentUserId
     val isOwnProfile = targetUserId == currentUserId
+    val context = LocalContext.current
     
     val userStats by FirebaseService.getUserStats(targetUserId).collectAsState(initial = null)
     var selectedTab by remember { mutableStateOf(0) }
@@ -106,6 +109,7 @@ fun ProfileScreen(
                                     FirebaseService.toggleFollow(targetUserId) 
                                 } catch (e: Exception) {
                                     android.util.Log.e("ProfileScreen", "Failed to toggle follow", e)
+                                    Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                                     isFollowingLocal = isFollowing // Revert on failure
                                 }
                             }
