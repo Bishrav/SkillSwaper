@@ -5,6 +5,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -15,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostScreen(onPostCreated: () -> Unit) {
+fun PostScreen(onBack: () -> Unit, onPostCreated: () -> Unit) {
     val scope = rememberCoroutineScope()
     var skillName by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
@@ -25,7 +27,17 @@ fun PostScreen(onPostCreated: () -> Unit) {
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("Create New Post") })
+            CenterAlignedTopAppBar(
+                title = { Text("Create New Post") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         Column(

@@ -30,7 +30,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
+fun HomeScreen(
+    onInquiryNavigate: (String, String, String) -> Unit,
+    onPayNavigate: (String, String, String, String) -> Unit
+) {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
     val followingList = currentUserStats?.followingList ?: emptyList()
@@ -101,7 +104,8 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
                         post = post,
                         isFollowing = followingList.contains(post.userId),
                         isStatsLoaded = currentUserStats != null,
-                        onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
+                        onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) },
+                        onPayClick = { onPayNavigate(post.id, post.price, post.userId, post.skillName) }
                     )
                     HorizontalDivider(color = Color.DarkGray.copy(alpha = 0.5f))
                 }
@@ -115,7 +119,8 @@ fun SkillPostItem(
     post: SkillPost, 
     isFollowing: Boolean, 
     isStatsLoaded: Boolean,
-    onInquiryClick: () -> Unit
+    onInquiryClick: () -> Unit,
+    onPayClick: () -> Unit
 ) {
     val context = LocalContext.current
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
@@ -151,25 +156,41 @@ fun SkillPostItem(
             }
             // Follow button functionality
             if (post.userId != currentUserId) {
-                Button(
-                    onClick = { 
-                        isFollowingLocal = !isFollowingLocal // Instant UI update
-                        lastInteractionTime = System.currentTimeMillis()
-                        scope.launch { 
-                            try {
-                                FirebaseService.toggleFollow(post.userId) 
-                            } catch (e: Exception) {
-                                Log.e("HomeScreen", "Failed to toggle follow", e)
-                                Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                                isFollowingLocal = isFollowing // Revert on failure
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(
+                        onClick = { 
+                            isFollowingLocal = !isFollowingLocal // Instant UI update
+                            lastInteractionTime = System.currentTimeMillis()
+                            scope.launch { 
+                                try {
+                                    FirebaseService.toggleFollow(post.userId) 
+                                } catch (e: Exception) {
+                                    Log.e("HomeScreen", "Failed to toggle follow", e)
+                                    Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                                    isFollowingLocal = isFollowing // Revert on failure
+                                }
                             }
-                        }
-                    },
-                    colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text(if (isFollowingLocal) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
+                        },
+                        colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text(if (isFollowingLocal) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Button(
+                        onClick = onPayClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("Pay Now", style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
         }

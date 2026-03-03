@@ -33,6 +33,10 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object UserProfile : Screen("user_profile/{userId}", "User Profile") {
         fun createRoute(userId: String) = "user_profile/$userId"
     }
+    object Payment : Screen("payment/{skillId}/{price}/{creatorId}/{skillName}", "Payment") {
+        fun createRoute(skillId: String, price: String, creatorId: String, skillName: String) = 
+            "payment/$skillId/${price.replace("$", "").trim()}/$creatorId/$skillName"
+    }
 }
 
 val bottomNavItems = listOf(
@@ -80,11 +84,21 @@ fun MainNavigation(onSignOut: () -> Unit) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { 
-                HomeScreen(onInquiryNavigate = { id, name, owner -> 
-                    navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
-                }) 
+                HomeScreen(
+                    onInquiryNavigate = { id, name, owner -> 
+                        navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
+                    },
+                    onPayNavigate = { id, price, owner, name ->
+                        navController.navigate(Screen.Payment.createRoute(id, price, owner, name))
+                    }
+                ) 
             }
-            composable(Screen.Post.route) { PostScreen(onPostCreated = { navController.navigate(Screen.Home.route) }) }
+            composable(Screen.Post.route) { 
+                PostScreen(
+                    onBack = { navController.popBackStack() },
+                    onPostCreated = { navController.navigate(Screen.Home.route) }
+                ) 
+            }
             composable(Screen.Notifications.route) { 
                 NotificationsScreen(onViewProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
@@ -127,9 +141,34 @@ fun MainNavigation(onSignOut: () -> Unit) {
                 val userId = backStackEntry.arguments?.getString("userId") ?: ""
                 ProfileScreen(
                     userId = userId,
+                    onBack = { navController.popBackStack() },
                     onInquiryNavigate = { id, name, owner -> 
                         navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
                     }
+                )
+            }
+            
+            composable(
+                route = Screen.Payment.route,
+                arguments = listOf(
+                    navArgument("skillId") { type = NavType.StringType },
+                    navArgument("price") { type = NavType.StringType },
+                    navArgument("creatorId") { type = NavType.StringType },
+                    navArgument("skillName") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val skillId = backStackEntry.arguments?.getString("skillId") ?: ""
+                val price = backStackEntry.arguments?.getString("price") ?: "0.0"
+                val creatorId = backStackEntry.arguments?.getString("creatorId") ?: ""
+                val skillName = backStackEntry.arguments?.getString("skillName") ?: ""
+                
+                PaymentScreen(
+                    skillId = skillId,
+                    price = price.toDoubleOrNull() ?: 0.0,
+                    creatorId = creatorId,
+                    skillName = skillName,
+                    onBack = { navController.popBackStack() },
+                    onPurchaseSuccess = { navController.popBackStack() }
                 )
             }
         }

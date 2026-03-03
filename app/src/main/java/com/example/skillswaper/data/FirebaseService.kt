@@ -352,4 +352,43 @@ object FirebaseService {
             throw Exception(friendlyError)
         }
     }
+
+    // Purchase Logic
+    suspend fun purchaseSkill(skillId: String, price: Double, creatorId: String) {
+        val currentUserId = auth.currentUser?.uid ?: return
+        if (currentUserId == creatorId) {
+            throw Exception("You cannot buy your own skill!")
+        }
+        
+        val creatorRef = db.collection("users").document(creatorId)
+        
+        try {
+            db.runTransaction { transaction ->
+                val creatorSnap = transaction.get(creatorRef)
+                
+                if (!creatorSnap.exists()) {
+                    throw Exception("Creator profile not found!")
+                }
+                
+                // Increment creator's earnings
+                transaction.update(creatorRef, "earnings", FieldValue.increment(price))
+                
+                // Track the purchase in a separate collection if needed, 
+                // but for now we just update the earnings as requested.
+                val purchaseRef = db.collection("purchases").document()
+                val purchaseData = mapOf(
+                    "skillId" to skillId,
+                    "buyerId" to currentUserId,
+                    "creatorId" to creatorId,
+                    "amount" to price,
+                    "timestamp" to System.currentTimeMillis()
+                )
+                transaction.set(purchaseRef, purchaseData)
+            }.await()
+            Log.d(TAG, "Purchase completed for skill $skillId. Creator $creatorId earned $price")
+        } catch (e: Exception) {
+            Log.e(TAG, "Purchase failed", e)
+            throw e
+        }
+    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfileScreen(
     userId: String? = null, 
+    onBack: (() -> Unit)? = null,
     onSignOut: (() -> Unit)? = null,
     onInquiryNavigate: (String, String, String) -> Unit
 ) {
@@ -44,6 +46,16 @@ fun ProfileScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(if (isOwnProfile) "My Profile" else userStats?.username ?: "Profile") },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                        Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                },
                 actions = {
                     if (isOwnProfile) {
                         IconButton(onClick = {
@@ -127,10 +139,10 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("Followers", "${userStats?.followersCount ?: 0}")
-                    StatItem("Following", "${userStats?.followingCount ?: 0}")
-                    StatItem("Skills", "${userStats?.postedSkillsCount ?: 0}")
-                    StatItem("Earnings", "$${userStats?.earnings ?: 0.0}")
+                    StatItem("Followers", userStats?.followersCount ?: 0)
+                    StatItem("Following", userStats?.followingCount ?: 0)
+                    StatItem("Skills", userStats?.postedSkillsCount ?: 0)
+                    StatItem("Earnings", "$${String.format("%.2f", userStats?.earnings ?: 0.0)}")
                 }
             }
             
@@ -166,7 +178,8 @@ fun ProfileScreen(
                             post = post, 
                             isFollowing = currentFollowingList.contains(post.userId),
                             isStatsLoaded = currentUserStats != null,
-                            onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
+                            onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) },
+                            onPayClick = { /* No-op in own profile */ }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     }
@@ -177,11 +190,17 @@ fun ProfileScreen(
 }
 
 @Composable
-fun StatItem(label: String, value: String) {
+fun StatItem(label: String, value: Any) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary
+        )
     }
 }
-
-
