@@ -82,6 +82,9 @@ fun ProfileScreen(
                     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
                     val isFollowing = currentUserStats?.followingList?.contains(targetUserId) == true
                     
+                    // Optimistic UI state
+                    var isFollowingLocal by remember(isFollowing) { mutableStateOf(isFollowing) }
+
                     LaunchedEffect(isFollowing) {
                         android.util.Log.d("ProfileScreen", "Is following state: $isFollowing for user: $targetUserId")
                     }
@@ -89,17 +92,19 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { 
+                            isFollowingLocal = !isFollowingLocal // Instant UI update
                             scope.launch { 
                                 try {
                                     FirebaseService.toggleFollow(targetUserId) 
                                 } catch (e: Exception) {
                                     android.util.Log.e("ProfileScreen", "Failed to toggle follow", e)
+                                    isFollowingLocal = isFollowing // Revert on failure
                                 }
                             }
                         },
-                        colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors()
+                        colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors()
                     ) {
-                        Text(if (isFollowing) "Following" else "Follow")
+                        Text(if (isFollowingLocal) "Following" else "Follow")
                     }
                 }
                 

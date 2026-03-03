@@ -112,6 +112,9 @@ fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> U
     val isLiked = post.likedBy?.contains(currentUserId) == true
     val scope = rememberCoroutineScope()
     var showComments by remember { mutableStateOf(false) }
+    
+    // Optimistic UI state
+    var isFollowingLocal by remember(isFollowing) { mutableStateOf(isFollowing) }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -130,19 +133,21 @@ fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> U
             if (post.userId != currentUserId) {
                 Button(
                     onClick = { 
+                        isFollowingLocal = !isFollowingLocal // Instant UI update
                         scope.launch { 
                             try {
                                 FirebaseService.toggleFollow(post.userId) 
                             } catch (e: Exception) {
                                 Log.e("HomeScreen", "Failed to toggle follow", e)
+                                isFollowingLocal = isFollowing // Revert on failure
                             }
                         }
                     },
-                    colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
+                    colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text(if (isFollowing) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
+                    Text(if (isFollowingLocal) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
                 }
             }
         }

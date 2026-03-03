@@ -45,7 +45,10 @@ object FirebaseService {
                     return@addSnapshotListener
                 }
                 try {
-                    trySend(snapshot?.toObject(User::class.java))
+                    val user = snapshot?.toObject(User::class.java)
+                    Log.d(TAG, "User stats update for $userId: $user")
+                    Log.d(TAG, "Raw followingList for $userId: ${snapshot?.get("followingList")}")
+                    trySend(user)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to parse User object", e)
                     trySend(null)
