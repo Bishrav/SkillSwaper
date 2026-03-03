@@ -29,6 +29,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
+    val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
+    val followingList = currentUserStats?.followingList ?: emptyList()
     var searchQuery by remember { mutableStateOf("") }
     var isSearchVisible by remember { mutableStateOf(false) }
 
@@ -89,6 +91,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
                 items(filteredSkills) { post ->
                     SkillPostItem(
                         post = post,
+                        isFollowing = followingList.contains(post.userId),
                         onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
                     )
                     HorizontalDivider(color = Color.DarkGray.copy(alpha = 0.5f))
@@ -99,7 +102,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
 }
 
 @Composable
-fun SkillPostItem(post: SkillPost, onInquiryClick: () -> Unit) {
+fun SkillPostItem(post: SkillPost, isFollowing: Boolean, onInquiryClick: () -> Unit) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val isLiked = post.likedBy?.contains(currentUserId) == true
     val scope = rememberCoroutineScope()
@@ -119,23 +122,23 @@ fun SkillPostItem(post: SkillPost, onInquiryClick: () -> Unit) {
                 Text(text = post.skillName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
             }
             // Follow button functionality
-            var isFollowing by remember { mutableStateOf(false) } // Placeholder for actual follow state
-            Button(
-                onClick = { 
-                    scope.launch { 
-                        try {
-                            FirebaseService.toggleFollow(post.userId) 
-                            isFollowing = !isFollowing
-                        } catch (e: Exception) {
-                            Log.e("HomeScreen", "Failed to toggle follow", e)
+            if (post.userId != currentUserId) {
+                Button(
+                    onClick = { 
+                        scope.launch { 
+                            try {
+                                FirebaseService.toggleFollow(post.userId) 
+                            } catch (e: Exception) {
+                                Log.e("HomeScreen", "Failed to toggle follow", e)
+                            }
                         }
-                    }
-                },
-                colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                modifier = Modifier.height(32.dp)
-            ) {
-                Text(if (isFollowing) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
+                    },
+                    colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text(if (isFollowing) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
 

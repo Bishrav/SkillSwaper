@@ -19,6 +19,7 @@ object FirebaseService {
     // Auth
     fun getCurrentUserId(): String? = auth.currentUser?.uid
     fun isUserLoggedIn(): Boolean = auth.currentUser != null
+    fun getCurrentUserStats(): Flow<User?> = getUserStats(getCurrentUserId() ?: "")
 
     // User Data
     suspend fun saveUserProfile(user: User) {

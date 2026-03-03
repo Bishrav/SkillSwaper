@@ -79,9 +79,23 @@ fun ProfileScreen(
                 Text(userStats?.email ?: "...", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
                 
                 if (!isOwnProfile) {
+                    val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
+                    val isFollowing = currentUserStats?.followingList?.contains(targetUserId) == true
+                    
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { scope.launch { FirebaseService.toggleFollow(targetUserId) } }) {
-                        Text("Follow")
+                    Button(
+                        onClick = { 
+                            scope.launch { 
+                                try {
+                                    FirebaseService.toggleFollow(targetUserId) 
+                                } catch (e: Exception) {
+                                    android.util.Log.e("ProfileScreen", "Failed to toggle follow", e)
+                                }
+                            }
+                        },
+                        colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors()
+                    ) {
+                        Text(if (isFollowing) "Following" else "Follow")
                     }
                 }
                 
@@ -117,6 +131,9 @@ fun ProfileScreen(
             }
             val posts by postsFlow.collectAsState(initial = emptyList())
             
+            val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
+            val currentFollowingList = currentUserStats?.followingList ?: emptyList()
+
             if (posts.isEmpty()) {
                 Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text("No posts found.", color = MaterialTheme.colorScheme.secondary)
@@ -126,6 +143,7 @@ fun ProfileScreen(
                     items(posts) { post ->
                         SkillPostItem(
                             post = post, 
+                            isFollowing = currentFollowingList.contains(post.userId),
                             onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
