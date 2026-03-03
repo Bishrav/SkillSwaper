@@ -23,6 +23,8 @@ import com.example.skillswaper.model.User
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
+import com.example.skillswaper.model.SkillPost
+import com.example.skillswaper.ui.screens.main.PaymentBottomSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,8 +33,7 @@ fun ProfileScreen(
     userId: String? = null, 
     onBack: (() -> Unit)? = null,
     onSignOut: (() -> Unit)? = null,
-    onInquiryNavigate: (String, String, String) -> Unit,
-    onPayNavigate: ((String, String, String, String) -> Unit)? = null
+    onInquiryNavigate: (String, String, String) -> Unit
 ) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val targetUserId = userId ?: currentUserId
@@ -41,6 +42,7 @@ fun ProfileScreen(
     
     val userStats by FirebaseService.getUserStats(targetUserId).collectAsState(initial = null)
     var selectedTab by remember { mutableStateOf(0) }
+    var selectedPostForPayment by remember { mutableStateOf<SkillPost?>(null) }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -181,13 +183,21 @@ fun ProfileScreen(
                             isStatsLoaded = currentUserStats != null,
                             onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) },
                             onPayClick = { 
-                                onPayNavigate?.invoke(post.id, post.price, post.userId, post.skillName)
+                                selectedPostForPayment = post
                             }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     }
                 }
             }
+        }
+        
+        selectedPostForPayment?.let { post ->
+            PaymentBottomSheet(
+                post = post,
+                onDismiss = { selectedPostForPayment = null },
+                onPurchaseSuccess = { selectedPostForPayment = null }
+            )
         }
     }
 }

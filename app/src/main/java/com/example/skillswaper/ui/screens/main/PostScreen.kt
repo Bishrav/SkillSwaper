@@ -88,7 +88,7 @@ fun PostScreen(onBack: () -> Unit, onPostCreated: () -> Unit) {
                             FirebaseService.postSkill(
                                 SkillPost(
                                     skillName = skillName,
-                                    price = price,
+                                    price = price.toDoubleOrNull() ?: 0.0,
                                     duration = duration,
                                     caption = caption,
                                     timestamp = System.currentTimeMillis()

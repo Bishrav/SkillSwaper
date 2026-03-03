@@ -2,11 +2,7 @@ package com.example.skillswaper.ui.screens.main
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,75 +12,74 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.skillswaper.data.FirebaseService
+import com.example.skillswaper.model.SkillPost
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PaymentScreen(
-    skillId: String,
-    price: Double,
-    creatorId: String,
-    skillName: String,
-    onBack: () -> Unit,
+fun PaymentBottomSheet(
+    post: SkillPost,
+    onDismiss: () -> Unit,
     onPurchaseSuccess: () -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    
     var cardNumber by remember { mutableStateOf("") }
     var expiryDate by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
     var cardHolder by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Secure Payment") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .padding(24.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                "Payment Form",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                "Skill: ${post.skillName}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Total Price", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Total Amount",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$$price",
-                        style = MaterialTheme.typography.displaySmall,
+                        "$${post.price}", 
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Skill: $skillName",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = cardHolder,
@@ -106,8 +101,7 @@ fun PaymentScreen(
                 label = { Text("Card Number") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                placeholder = { Text("1234 5678 1234 5678") }
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -146,9 +140,10 @@ fun PaymentScreen(
                         isLoading = true
                         scope.launch {
                             try {
-                                FirebaseService.purchaseSkill(skillId, price, creatorId)
+                                FirebaseService.purchaseSkill(post.id, post.price, post.userId)
                                 Toast.makeText(context, "Purchase Successful!", Toast.LENGTH_LONG).show()
                                 onPurchaseSuccess()
+                                onDismiss()
                             } catch (e: Exception) {
                                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                             } finally {
@@ -163,18 +158,19 @@ fun PaymentScreen(
                 enabled = !isLoading
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Secure Purchase", style = MaterialTheme.typography.titleMedium)
+                    Text("Submit & Pay", style = MaterialTheme.typography.titleMedium)
                 }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Your payment details are secure and encrypted.",
+                "The creator's earnings will increase upon success.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary
             )
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

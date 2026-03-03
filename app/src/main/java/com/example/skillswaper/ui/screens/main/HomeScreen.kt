@@ -26,17 +26,19 @@ import android.util.Log
 import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.model.Comment
 import com.example.skillswaper.model.SkillPost
+import com.example.skillswaper.ui.screens.main.PaymentBottomSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onInquiryNavigate: (String, String, String) -> Unit,
-    onPayNavigate: (String, String, String, String) -> Unit
+    onInquiryNavigate: (String, String, String) -> Unit
 ) {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
     val followingList = currentUserStats?.followingList ?: emptyList()
+    
+    var selectedPostForPayment by remember { mutableStateOf<SkillPost?>(null) }
     
     LaunchedEffect(followingList) {
         Log.d("HomeScreen", "Current user following list updated: $followingList")
@@ -105,11 +107,22 @@ fun HomeScreen(
                         isFollowing = followingList.contains(post.userId),
                         isStatsLoaded = currentUserStats != null,
                         onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) },
-                        onPayClick = { onPayNavigate(post.id, post.price, post.userId, post.skillName) }
+                        onPayClick = { selectedPostForPayment = post }
                     )
                     HorizontalDivider(color = Color.DarkGray.copy(alpha = 0.5f))
                 }
             }
+        }
+        
+        selectedPostForPayment?.let { post ->
+            PaymentBottomSheet(
+                post = post,
+                onDismiss = { selectedPostForPayment = null },
+                onPurchaseSuccess = { 
+                    selectedPostForPayment = null
+                    // Statistics will auto-update via Firebase flows
+                }
+            )
         }
     }
 }
@@ -192,7 +205,7 @@ fun SkillPostItem(
             Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("Price", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                    Text(post.price, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text("$${post.price}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
                 Column {
                     Text("Duration", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
