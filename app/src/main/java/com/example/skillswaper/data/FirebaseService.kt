@@ -285,6 +285,10 @@ object FirebaseService {
                 val currentSnap = transaction.get(currentUserRef)
                 val targetSnap = transaction.get(targetUserRef)
                 
+                if (!targetSnap.exists()) {
+                    throw Exception("Target person doesn't have a profile yet!")
+                }
+
                 // Manual parsing of following list
                 val followingRaw = currentSnap.get("followingList")
                 val following = if (followingRaw is List<*>) {
@@ -295,18 +299,7 @@ object FirebaseService {
                 
                 // WRITE SECTION - Updates and sets
                 
-                // 1. Ensure Target Profile exists
-                if (!targetSnap.exists()) {
-                    Log.d(TAG, "Target user $targetUserId profile does not exist. Initializing basic profile.")
-                    val dummyUser = User(
-                        uid = targetUserId,
-                        username = "User",
-                        email = "..."
-                    )
-                    transaction.set(targetUserRef, dummyUser)
-                }
-
-                // 2. Handle Follow/Unfollow logic
+                // 1. Only initialize OWN profile if missing (allowed by security rules)
                 if (!currentSnap.exists()) {
                     Log.d(TAG, "Current user $currentUserId profile does not exist. Initializing basic profile.")
                     val userEmail = auth.currentUser?.email ?: "Unknown"
@@ -322,6 +315,7 @@ object FirebaseService {
                     transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
                     transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
                 } else {
+                    // 2. Normal Follow/Unfollow logic
                     if (following.contains(targetUserId)) {
                         Log.d(TAG, "Unfollowing user $targetUserId")
                         transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
@@ -339,8 +333,13 @@ object FirebaseService {
             }.await()
             Log.d(TAG, "Toggle follow transaction completed successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error toggling follow: ${e.message}", e)
-            throw e // Rethrow to let UI handle feedback
+            val friendlyError = if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
+                "Firebase Permission Denied: Please update your Firestore Security Rules in the Firebase Console!"
+            } else {
+                e.message ?: "Unknown error"
+            }
+            Log.e(TAG, "Error toggling follow: $friendlyError", e)
+            throw Exception(friendlyError)
         }
     }
 }
