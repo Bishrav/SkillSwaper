@@ -156,41 +156,25 @@ fun SkillPostItem(
             }
             // Follow button functionality
             if (post.userId != currentUserId) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(
-                        onClick = { 
-                            isFollowingLocal = !isFollowingLocal // Instant UI update
-                            lastInteractionTime = System.currentTimeMillis()
-                            scope.launch { 
-                                try {
-                                    FirebaseService.toggleFollow(post.userId) 
-                                } catch (e: Exception) {
-                                    Log.e("HomeScreen", "Failed to toggle follow", e)
-                                    Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                                    isFollowingLocal = isFollowing // Revert on failure
-                                }
+                Button(
+                    onClick = { 
+                        isFollowingLocal = !isFollowingLocal // Instant UI update
+                        lastInteractionTime = System.currentTimeMillis()
+                        scope.launch { 
+                            try {
+                                FirebaseService.toggleFollow(post.userId) 
+                            } catch (e: Exception) {
+                                Log.e("HomeScreen", "Failed to toggle follow", e)
+                                Toast.makeText(context, "Follow failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                                isFollowingLocal = isFollowing // Revert on failure
                             }
-                        },
-                        colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text(if (isFollowingLocal) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
-                    }
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Button(
-                        onClick = onPayClick,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary,
-                            contentColor = MaterialTheme.colorScheme.onTertiary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text("Pay Now", style = MaterialTheme.typography.labelMedium)
-                    }
+                        }
+                    },
+                    colors = if (isFollowingLocal) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text(if (isFollowingLocal) "Following" else "Follow", style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
@@ -214,8 +198,28 @@ fun SkillPostItem(
                     Text("Duration", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
                     Text(post.duration, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
-                Button(onClick = onInquiryClick, modifier = Modifier.height(36.dp)) {
-                    Text("Inquiry", style = MaterialTheme.typography.labelMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(
+                        onClick = onInquiryClick, 
+                        modifier = Modifier.height(36.dp),
+                        enabled = post.userId != currentUserId
+                    ) {
+                        Text("Inquiry", style = MaterialTheme.typography.labelMedium)
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Button(
+                        onClick = onPayClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary
+                        ),
+                        modifier = Modifier.height(36.dp),
+                        enabled = post.userId != currentUserId
+                    ) {
+                        Text("Pay Now", style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
         }

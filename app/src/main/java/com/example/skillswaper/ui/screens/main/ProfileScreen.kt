@@ -31,7 +31,8 @@ fun ProfileScreen(
     userId: String? = null, 
     onBack: (() -> Unit)? = null,
     onSignOut: (() -> Unit)? = null,
-    onInquiryNavigate: (String, String, String) -> Unit
+    onInquiryNavigate: (String, String, String) -> Unit,
+    onPayNavigate: ((String, String, String, String) -> Unit)? = null
 ) {
     val currentUserId = FirebaseService.getCurrentUserId() ?: ""
     val targetUserId = userId ?: currentUserId
@@ -179,7 +180,9 @@ fun ProfileScreen(
                             isFollowing = currentFollowingList.contains(post.userId),
                             isStatsLoaded = currentUserStats != null,
                             onInquiryClick = { onInquiryNavigate(post.id, post.skillName, post.userId) },
-                            onPayClick = { /* No-op in own profile */ }
+                            onPayClick = { 
+                                onPayNavigate?.invoke(post.id, post.price, post.userId, post.skillName)
+                            }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     }

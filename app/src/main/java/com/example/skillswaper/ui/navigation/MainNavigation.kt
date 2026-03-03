@@ -109,6 +109,9 @@ fun MainNavigation(onSignOut: () -> Unit) {
                     onSignOut = onSignOut,
                     onInquiryNavigate = { id, name, owner -> 
                         navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
+                    },
+                    onPayNavigate = { id, price, owner, name ->
+                        navController.navigate(Screen.Payment.createRoute(id, price, owner, name))
                     }
                 ) 
             }
@@ -144,6 +147,9 @@ fun MainNavigation(onSignOut: () -> Unit) {
                     onBack = { navController.popBackStack() },
                     onInquiryNavigate = { id, name, owner -> 
                         navController.navigate(Screen.InquiryForm.createRoute(id, name, owner)) 
+                    },
+                    onPayNavigate = { id, price, owner, name ->
+                        navController.navigate(Screen.Payment.createRoute(id, price, owner, name))
                     }
                 )
             }
