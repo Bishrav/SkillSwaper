@@ -240,7 +240,17 @@ object FirebaseService {
             fromUserName = userEmail.substringBefore("@")
         )
         
-        db.collection("inquiries").add(newInquiry).await()
+        try {
+            db.collection("inquiries").add(newInquiry).await()
+        } catch (e: Exception) {
+            val friendlyError = if (e.message?.contains("PERMISSION_DENIED", ignoreCase = true) == true) {
+                "Firebase Permission Denied: Please update your Firestore Security Rules to include the 'inquiries' collection!"
+            } else {
+                e.message ?: "Unknown error"
+            }
+            Log.e(TAG, "Error sending inquiry: $friendlyError", e)
+            throw Exception(friendlyError)
+        }
     }
 
     fun getInquiries(): Flow<List<Inquiry>> = callbackFlow {
