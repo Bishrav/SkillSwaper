@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import android.util.Log
 import com.example.skillswaper.data.FirebaseService
 import com.example.skillswaper.model.Comment
 import com.example.skillswaper.model.SkillPost
@@ -122,8 +123,12 @@ fun SkillPostItem(post: SkillPost, onInquiryClick: () -> Unit) {
             Button(
                 onClick = { 
                     scope.launch { 
-                        FirebaseService.toggleFollow(post.userId) 
-                        isFollowing = !isFollowing
+                        try {
+                            FirebaseService.toggleFollow(post.userId) 
+                            isFollowing = !isFollowing
+                        } catch (e: Exception) {
+                            Log.e("HomeScreen", "Failed to toggle follow", e)
+                        }
                     }
                 },
                 colors = if (isFollowing) ButtonDefaults.filledTonalButtonColors() else ButtonDefaults.buttonColors(),

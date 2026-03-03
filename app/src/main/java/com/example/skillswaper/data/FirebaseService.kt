@@ -63,13 +63,21 @@ object FirebaseService {
             userName = userEmail.substringBefore("@")
         )
         
-        db.runBatch { batch ->
-            val skillRef = db.collection("skills").document()
-            batch.set(skillRef, newSkill)
-            
-            val userRef = db.collection("users").document(userId)
-            batch.update(userRef, "postedSkillsCount", FieldValue.increment(1))
-        }.await()
+        try {
+            db.runBatch { batch ->
+                val skillRef = db.collection("skills").document()
+                batch.set(skillRef, newSkill)
+                
+                val userRef = db.collection("users").document(userId)
+                // Use set with merge if we're not sure the document exists, 
+                // but incrementing requires the document to exist or it might fail in transaction.
+                // In batch, incrementing a non-existent field works, but the doc must exist.
+                batch.set(userRef, mapOf("postedSkillsCount" to FieldValue.increment(1)), com.google.firebase.firestore.SetOptions.merge())
+            }.await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error posting skill", e)
+            throw e
+        }
     }
 
     fun getSkillsFeed(): Flow<List<SkillPost>> = callbackFlow {
@@ -261,23 +269,44 @@ object FirebaseService {
         val currentUserRef = db.collection("users").document(currentUserId)
         val targetUserRef = db.collection("users").document(targetUserId)
         
-        db.runTransaction { transaction ->
-            val currentSnap = transaction.get(currentUserRef)
-            val following = currentSnap.get("followingList") as? List<String> ?: emptyList()
-            
-            if (following.contains(targetUserId)) {
-                // Unfollow
-                transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
-                transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
-                transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
-                transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
-            } else {
-                // Follow
-                transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
-                transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
-                transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
-                transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
-            }
-        }.await()
+        try {
+            db.runTransaction { transaction ->
+                val currentSnap = transaction.get(currentUserRef)
+                val targetSnap = transaction.get(targetUserRef)
+                
+                // Ensure target user exists before trying to follow
+                if (!targetSnap.exists()) {
+                    Log.e(TAG, "Target user $targetUserId does not exist")
+                    return@runTransaction
+                }
+
+                // If current user profile doesn't exist (e.g. race condition after signup), 
+                // we should probably create it or abort safely.
+                if (!currentSnap.exists()) {
+                    Log.e(TAG, "Current user $currentUserId profile does not exist")
+                    return@runTransaction
+                }
+
+                val following = currentSnap.get("followingList") as? List<String> ?: emptyList()
+                
+                if (following.contains(targetUserId)) {
+                    // Unfollow
+                    transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
+                    transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
+                    transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
+                    transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
+                } else {
+                    // Follow
+                    transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
+                    transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
+                    transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
+                    transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
+                }
+            }.await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error toggling follow", e)
+            // Re-throw if you want the UI to handle it, but wrapping in try-catch prevents app crash if not handled upstream.
+            throw e
+        }
     }
 }
