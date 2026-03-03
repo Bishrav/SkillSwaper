@@ -82,6 +82,10 @@ fun ProfileScreen(
                     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
                     val isFollowing = currentUserStats?.followingList?.contains(targetUserId) == true
                     
+                    LaunchedEffect(isFollowing) {
+                        android.util.Log.d("ProfileScreen", "Is following state: $isFollowing for user: $targetUserId")
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { 

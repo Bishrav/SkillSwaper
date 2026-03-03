@@ -165,7 +165,12 @@ object FirebaseService {
         
         db.runTransaction { transaction ->
             val snapshot = transaction.get(docRef)
-            val likedBy = snapshot.get("likedBy") as? List<String> ?: emptyList()
+            val likedByRaw = snapshot.get("likedBy")
+            val likedBy = if (likedByRaw is List<*>) {
+                likedByRaw.filterIsInstance<String>()
+            } else {
+                emptyList<String>()
+            }
             
             if (likedBy.contains(userId)) {
                 transaction.update(docRef, "likedBy", FieldValue.arrayRemove(userId))
@@ -271,42 +276,47 @@ object FirebaseService {
         val targetUserRef = db.collection("users").document(targetUserId)
         
         try {
+            Log.d(TAG, "Attempting to toggle follow for $targetUserId by $currentUserId")
             db.runTransaction { transaction ->
                 val currentSnap = transaction.get(currentUserRef)
                 val targetSnap = transaction.get(targetUserRef)
                 
-                // Ensure target user exists before trying to follow
                 if (!targetSnap.exists()) {
                     Log.e(TAG, "Target user $targetUserId does not exist")
                     return@runTransaction
                 }
 
-                // If current user profile doesn't exist (e.g. race condition after signup), 
-                // we should probably create it or abort safely.
                 if (!currentSnap.exists()) {
-                    Log.e(TAG, "Current user $currentUserId profile does not exist")
+                    Log.e(TAG, "Current user $currentUserId profile does not exist. Initializing profile.")
+                    // If profile doesn't exist, we can't follow, but we can try to initialize it first
+                    // However, it's safer to just return and let user know.
                     return@runTransaction
                 }
 
-                val following = currentSnap.get("followingList") as? List<String> ?: emptyList()
+                val followingRaw = currentSnap.get("followingList")
+                val following = if (followingRaw is List<*>) {
+                    followingRaw.filterIsInstance<String>()
+                } else {
+                    emptyList<String>()
+                }
                 
                 if (following.contains(targetUserId)) {
-                    // Unfollow
+                    Log.d(TAG, "Unfollowing user $targetUserId")
                     transaction.update(currentUserRef, "followingList", FieldValue.arrayRemove(targetUserId))
                     transaction.update(currentUserRef, "followingCount", FieldValue.increment(-1))
                     transaction.update(targetUserRef, "followerList", FieldValue.arrayRemove(currentUserId))
                     transaction.update(targetUserRef, "followersCount", FieldValue.increment(-1))
                 } else {
-                    // Follow
+                    Log.d(TAG, "Following user $targetUserId")
                     transaction.update(currentUserRef, "followingList", FieldValue.arrayUnion(targetUserId))
                     transaction.update(currentUserRef, "followingCount", FieldValue.increment(1))
                     transaction.update(targetUserRef, "followerList", FieldValue.arrayUnion(currentUserId))
                     transaction.update(targetUserRef, "followersCount", FieldValue.increment(1))
                 }
             }.await()
+            Log.d(TAG, "Toggle follow transaction completed successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error toggling follow", e)
-            // Re-throw if you want the UI to handle it, but wrapping in try-catch prevents app crash if not handled upstream.
+            Log.e(TAG, "Error toggling follow: ${e.message}", e)
             throw e
         }
     }

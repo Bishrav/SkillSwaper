@@ -31,6 +31,11 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
     val skills by FirebaseService.getSkillsFeed().collectAsState(initial = emptyList())
     val currentUserStats by FirebaseService.getCurrentUserStats().collectAsState(initial = null)
     val followingList = currentUserStats?.followingList ?: emptyList()
+    
+    LaunchedEffect(followingList) {
+        Log.d("HomeScreen", "Current user following list updated: $followingList")
+    }
+
     var searchQuery by remember { mutableStateOf("") }
     var isSearchVisible by remember { mutableStateOf(false) }
 
