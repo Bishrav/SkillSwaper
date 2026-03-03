@@ -94,7 +94,7 @@ fun HomeScreen(onInquiryNavigate: (String, String, String) -> Unit) {
                     .padding(innerPadding)
                     .fillMaxSize()
             ) {
-                items(filteredSkills) { post ->
+                items(filteredSkills, key = { it.id }) { post ->
                     SkillPostItem(
                         post = post,
                         isFollowing = followingList.contains(post.userId),
@@ -122,13 +122,13 @@ fun SkillPostItem(
     
     // Optimistic UI state - persistent and protected
     var isFollowingLocal by rememberSaveable(post.id) { mutableStateOf(isFollowing) }
-    var lastInteractionTime by remember { mutableLongStateOf(0L) }
+    var lastInteractionTime by rememberSaveable(post.id) { mutableLongStateOf(0L) }
     
     // Sync with backend ONLY when data is reliable and not recently interacted with
     LaunchedEffect(isFollowing, isStatsLoaded) {
         val currentTime = System.currentTimeMillis()
-        // Ignore backend updates for 3 seconds after a click to prevent premature reverts
-        if (isStatsLoaded && (currentTime - lastInteractionTime > 3000)) {
+        // Ignore backend updates for 10 seconds after a click to prevent premature reverts
+        if (isStatsLoaded && (currentTime - lastInteractionTime > 10000)) {
             isFollowingLocal = isFollowing
         }
     }

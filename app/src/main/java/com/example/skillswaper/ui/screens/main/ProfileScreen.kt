@@ -85,12 +85,12 @@ fun ProfileScreen(
                     
                     // Optimistic UI state - persistent and protected
                     var isFollowingLocal by rememberSaveable(targetUserId) { mutableStateOf(isFollowing) }
-                    var lastInteractionTime by remember { mutableLongStateOf(0L) }
+                    var lastInteractionTime by rememberSaveable(targetUserId) { mutableLongStateOf(0L) }
                     
                     LaunchedEffect(isFollowing, currentUserStats != null) {
                         val currentTime = System.currentTimeMillis()
-                        // Ignore backend updates for 3 seconds after a click to prevent premature reverts
-                        if (currentUserStats != null && (currentTime - lastInteractionTime > 3000)) {
+                        // Ignore backend updates for 10 seconds after a click to prevent premature reverts
+                        if (currentUserStats != null && (currentTime - lastInteractionTime > 10000)) {
                             isFollowingLocal = isFollowing
                             android.util.Log.d("ProfileScreen", "Is following state updated from backend: $isFollowing for user: $targetUserId")
                         }
@@ -157,7 +157,7 @@ fun ProfileScreen(
                 }
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(posts) { post ->
+                    items(posts, key = { it.id }) { post ->
                         SkillPostItem(
                             post = post, 
                             isFollowing = currentFollowingList.contains(post.userId),
